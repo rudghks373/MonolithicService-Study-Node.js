@@ -1,72 +1,140 @@
 const http = require("http");
-const url = require("url");
-const querystring = require("querystring");
 
-const members = require("./monolithic_members.js");
-const goods = require("./monolithic_goods.js");
-const purchases = require("./monolithic_purchases.js");
+var options = {
+  host: "127.0.0.1",
+  port: 8000,
+  headers: {
+    "Content-Type": "application/json"
+  }
+};
 
-/**
- * HTTP 서버를 만들고 요청 처리
- */
-var server = http
-  .createServer((req, res) => {
-    var method = req.method;
-    var uri = url.parse(req.url, true);
-    var pathname = uri.pathname;
+function request(cb, params) {
+  var req = http.request(options, res => {
+    var data = "";
+    res.on("data", chunk => {
+      data += chunk;
+    });
 
-    if (method === "POST" || method === "PUT") {
-      var body = "";
+    res.on("end", () => {
+      console.log(options, data);
+      cb();
+    });
+  });
 
-      req.on("data", function(data) {
-        body += data;
-      });
-      req.on("end", function() {
-        var params;
-        if (req.headers["content-type"] == "application/json") {
-          params = JSON.parse(body);
-        } else {
-          params = querystring.parse(body);
-        }
+  if (params) {
+    req.write(JSON.stringify(params));
+  }
 
-        onRequest(res, method, pathname, params);
-      });
-    } else {
-      onRequest(res, method, pathname, uri.query);
-    }
-  })
-  .listen(8000);
+  req.end();
+}
 
 /**
- * 요청에 대해 회원 관리, 상품 관리, 구매 관리 모듈별로 분기
- * @param res       response 객체
- * @param method    메서드
- * @param pathname  URI
- * @param params    입력 파라미터
+ * 상품 관리 API 테스트
  */
-function onRequest(res, method, pathname, params) {
-  switch (pathname) {
-    case "/members":
-      members.onRequest(res, method, pathname, params, response);
-      break;
-    case "/goods":
-      goods.onRequest(res, method, pathname, params, response);
-      break;
-    case "/purchases":
-      purchases.onRequest(res, method, pathname, params, response);
-      break;
-    default:
-      res.writeHead(404);
-      return res.end();
+
+function goods(callback) {
+  goods_post(() => {
+    goods_get(() => {
+      goods_delete(callback);
+    });
+  });
+
+  function goods_post(cb) {
+    options.method = "POST";
+    options.path = "/goods";
+    request(cb, {
+      name: "test Goods",
+      category: "tests",
+      price: 1000,
+      description: "test"
+    });
+  }
+
+  function goods_get(cb) {
+    options.method = "GET";
+    options.path = "/goods";
+    request(cb);
+  }
+
+  function goods_delete(cb) {
+    options.method = "DELETE";
+    options.path = "/goods?id=1";
+    request(cb);
   }
 }
 
 /**
- * HTTP 헤더에 JSON 형식으로 응답
- * @param res       response 객체
- * @param packet    결과 파라미터
+ * 회원 관리 API 테스트
  */
-function response(res, packet) {
-  res.writeHead(200, { "Content-Type": "application/json" });
-  res.end(JSON.stringify(packet));
+function members(callback) {
+  members_delete(() => {
+    members_post(() => {
+      members_get(callback);
+    });
+  });
+
+  function members_post(cb) {
+    options.method = "POST";
+    options.path = "/members";
+    request(cb, {
+      username: "test_account",
+      password: "1234",
+      passwordConfirm: "1234"
+    });
+  }
+
+  function members_get(cb) {
+    options.method = "GET";
+    options.path = "/members?username=test_account&password=1234";
+    request(cb);
+  }
+
+  function members_delete(cb) {
+    options.method = "DELETE";
+    options.path = "/members?username=test_account";
+    request(cb);
+  }
 }
+
+/**
+ *  구매 관리 API 테스트
+ */
+function purchases(callback) {
+  purchases_post(() => {
+    purchases_get(() => {
+      callback();
+    });
+  });
+
+  function purchases_post(cb) {
+    options.method = "POST";
+    options.path = "/purchases";
+    request(cb, {
+      userid: 1,
+      goodsid: 1
+    });
+  }
+
+  function purchases_get(cb) {
+    options.method = "GET";
+    options.path = "/purchases?userid=1";
+    request(cb);
+  }
+}
+
+console.log(
+  "============================== members =============================="
+);
+members(() => {
+  console.log(
+    "============================== goods =============================="
+  );
+  goods(() => {
+    console.log(
+      "============================== purchases =============================="
+    );
+    purchases(() => {
+      console.log("done");
+    });
+  });
+});
