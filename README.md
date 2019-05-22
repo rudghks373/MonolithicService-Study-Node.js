@@ -1,8 +1,6 @@
 > 길벗사 (Node.js 마이크로서비스 코딩 공작소)
 
-# 개요
-
-**monolithic architecture**
+# monolithic architecture
 
 - 모놀리식 아키텍처, 모놀리딕 아키텍처, 모놀리틱 아키텍처, 일체식 구조, 일체식 아키텍처, 일체형 아키텍처
 - 마이크로서비스 아키텍처의 반대 개념
