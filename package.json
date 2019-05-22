@@ -1,8 +1,8 @@
 {
   "name": "monolithicservice-study-nodejs",
   "version": "1.0.0",
-  "description": "",
-  "main": "src/index.js",
+  "description": "monolithic architecture",
+  "main": "monolithic.js",
   "scripts": {
     "start": "nodemon src/index.js localhost 8080"
   },
